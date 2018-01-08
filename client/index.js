@@ -4,6 +4,7 @@ var html = require('choo/html')
 var persist = require('choo-persist')
 var devtools = require('choo-devtools')
 var dataframe = require('dataframe')
+var accounting = require('accounting')
 
 var styles = require('./styles')
 var download = require('./download')
@@ -18,11 +19,39 @@ app.mount('body')
 function mainView (state, emit) {
   return html`
     <body class=${styles.body}>
+      ${renderRates()}
       ${renderNewTransaction()}
       ${renderTransactionList()}
       ${renderControls()}
     </body>
   `
+
+  function renderRates () {
+    return html`
+      <div>
+        ${renderField({
+          key: 'btc',
+          value: state.rates.btc,
+          title: 'BTC'
+        }, onRateChange)}
+        ${renderField({
+          key: 'bch',
+          value: state.rates.bch,
+          title: 'BCH'
+        }, onRateChange)}
+        ${renderField({
+          key: 'eth',
+          value: state.rates.eth,
+          title: 'ETH'
+        }, onRateChange)}
+        ${renderField({
+          key: 'ltc',
+          value: state.rates.ltc,
+          title: 'LTC'
+        }, onRateChange)}
+      </div>
+    `
+  }
 
   function renderNewTransaction () {
     return html`
@@ -64,10 +93,19 @@ function mainView (state, emit) {
     ]
 
     var reduce = function (row, memo) {
-      memo.usd = (memo.usd || 0) + parseFloat(row.usd)
-      memo.amount = (memo.amount || 0) + parseFloat(row.amount)
+      var rateNow = parseFloat(state.rates[row.currency] || 0)
+
+      var usd = parseFloat(row.usd)
+      var amount = parseFloat(row.amount)
+      var currentValue = rateNow * amount
+
+      memo.usd = (memo.usd || 0) + usd
+      memo.amount = (memo.amount || 0) + amount
+      memo.currentValue = (memo.currentValue || 0) + currentValue
 
       memo.rate = memo.usd / memo.amount
+      memo.profit = memo.currentValue - memo.usd
+      memo.margin = memo.profit / memo.usd
 
       return memo
     }
@@ -92,6 +130,9 @@ function mainView (state, emit) {
               <th class='${styles.th} tr'>Amount</th>
               <th class='${styles.th} tr'>USD</th>
               <th class='${styles.th} tr'>Rate</th>
+              <th class='${styles.th} tr'>Value</th>
+              <th class='${styles.th} tr'>Profit</th>
+              <th class='${styles.th} tr'>Margin</th>
             </tr>
           </thead>
           <tbody class=${styles.tbody}>
@@ -100,9 +141,12 @@ function mainView (state, emit) {
                 <tr>
                   <td class=${styles.td}>${row.Currency.toUpperCase()}</td>
 
-                  <td class='${styles.td} tr'>${row.amount.toFixed(2)}</td>
-                  <td class='${styles.td} tr'>${row.usd.toFixed(2)}</td>
-                  <td class='${styles.td} tr'>${row.rate.toFixed(2)}</td>
+                  <td class='${styles.td} tr'>${accounting.formatNumber(row.amount, 4)}</td>
+                  <td class='${styles.td} tr'>${accounting.formatMoney(row.usd)}</td>
+                  <td class='${styles.td} tr'>${accounting.formatMoney(row.rate)}</td>
+                  <td class='${styles.td} tr'>${accounting.formatMoney(row.currentValue)}</td>
+                  <td class='${styles.td} tr'>${accounting.formatMoney(row.profit)}</td>
+                  <td class='${styles.td} tr'>${accounting.formatNumber(row.margin * 100, 1)}%</td>
                 </tr>
               `
             })}
@@ -134,11 +178,23 @@ function mainView (state, emit) {
     var value = evt.target.value
     emit('changeTransaction', {key, value})
   }
+
+  function onRateChange (evt) {
+    var key = evt.target.name
+    var value = evt.target.value
+    emit('changeRate', {key, value})
+  }
 }
 
 function countStore (state, emitter) {
+  state.rates = state.rates || {}
   state.newTransaction = state.newTransaction || {}
   state.transactions = state.transactions || []
+
+  emitter.on('changeRate', function ({key, value}) {
+    state.rates[key] = value
+    emitter.emit('render')
+  })
 
   emitter.on('addTransaction', function () {
     var tx = state.newTransaction
