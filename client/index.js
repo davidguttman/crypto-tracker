@@ -95,6 +95,7 @@ function mainView (state, emit) {
 
   function renderTransactionList () {
     var dimensions = [
+      {value: row => 'Total', title: 'Total'},
       {value: 'currency', title: 'Currency'},
       {value: 'date', title: 'Date'}
     ]
@@ -124,7 +125,7 @@ function mainView (state, emit) {
     })
 
     var results = df.calculate({
-      dimensions: ['Currency']
+      dimensions: ['Total', 'Currency']
     })
 
     return html`
@@ -135,8 +136,8 @@ function mainView (state, emit) {
               <th class=${styles.th}>Currency</th>
 
               <th class='${styles.th} tr'>Amount</th>
-              <th class='${styles.th} tr'>USD</th>
               <th class='${styles.th} tr'>Rate</th>
+              <th class='${styles.th} tr'>USD</th>
               <th class='${styles.th} tr'>Value</th>
               <th class='${styles.th} tr'>Profit</th>
               <th class='${styles.th} tr'>Margin</th>
@@ -146,11 +147,11 @@ function mainView (state, emit) {
             ${results.map(function (row) {
               return html`
                 <tr>
-                  <td class=${styles.td}>${row.Currency.toUpperCase()}</td>
+                  <td class=${styles.td}>${(row.Currency || '').toUpperCase()}</td>
 
-                  <td class='${styles.td} tr'>${accounting.formatNumber(row.amount, 4)}</td>
+                  <td class='${styles.td} tr'>${row.Currency && accounting.formatNumber(row.amount, 4)}</td>
+                  <td class='${styles.td} tr'>${row.Currency && accounting.formatMoney(row.rate)}</td>
                   <td class='${styles.td} tr'>${accounting.formatMoney(row.usd)}</td>
-                  <td class='${styles.td} tr'>${accounting.formatMoney(row.rate)}</td>
                   <td class='${styles.td} tr'>${accounting.formatMoney(row.currentValue)}</td>
                   <td class='${styles.td} tr'>${accounting.formatMoney(row.profit)}</td>
                   <td class='${styles.td} tr'>${accounting.formatNumber(row.margin * 100, 1)}%</td>
