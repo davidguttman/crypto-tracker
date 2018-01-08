@@ -1,6 +1,7 @@
 var cuid = require('cuid')
 var choo = require('choo')
 var html = require('choo/html')
+var jsonist = require('jsonist')
 var persist = require('choo-persist')
 var devtools = require('choo-devtools')
 var dataframe = require('dataframe')
@@ -31,24 +32,30 @@ function mainView (state, emit) {
       <div>
         ${renderField({
           key: 'btc',
-          value: state.rates.btc,
+          value: accounting.formatMoney(state.rates.btc),
           title: 'BTC'
         }, onRateChange)}
         ${renderField({
           key: 'bch',
-          value: state.rates.bch,
+          value: accounting.formatMoney(state.rates.bch),
           title: 'BCH'
         }, onRateChange)}
         ${renderField({
           key: 'eth',
-          value: state.rates.eth,
+          value: accounting.formatMoney(state.rates.eth),
           title: 'ETH'
         }, onRateChange)}
         ${renderField({
           key: 'ltc',
-          value: state.rates.ltc,
+          value: accounting.formatMoney(state.rates.ltc),
           title: 'LTC'
         }, onRateChange)}
+
+        <button
+          class=${styles.button}
+          onclick=${clickUpdateRates}>
+          Update Rates
+        </button>
       </div>
     `
   }
@@ -181,8 +188,20 @@ function mainView (state, emit) {
 
   function onRateChange (evt) {
     var key = evt.target.name
-    var value = evt.target.value
+    var value = accounting.unformat(evt.target.value)
     emit('changeRate', {key, value})
+  }
+
+  function clickUpdateRates () {
+    var url = 'https://api.coinbase.com/v2/prices/USD/spot?'
+    jsonist.get(url, {headers: {'cb-version': '2017-08-07'}}, function (err, res) {
+      if (err) return console.error(err)
+      res.data.forEach(function (rate) {
+        var key = rate.base.toLowerCase()
+        var value = rate.amount
+        emit('changeRate', {key, value})
+      })
+    })
   }
 }
 
