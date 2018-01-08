@@ -149,12 +149,12 @@ function mainView (state, emit) {
                 <tr>
                   <td class=${styles.td}>${(row.Currency || '').toUpperCase()}</td>
 
-                  <td class='${styles.td} tr'>${row.Currency && accounting.formatNumber(row.amount, 4)}</td>
-                  <td class='${styles.td} tr'>${row.Currency && accounting.formatMoney(row.rate)}</td>
-                  <td class='${styles.td} tr'>${accounting.formatMoney(row.usd)}</td>
-                  <td class='${styles.td} tr'>${accounting.formatMoney(row.currentValue)}</td>
-                  <td class='${styles.td} tr'>${accounting.formatMoney(row.profit)}</td>
-                  <td class='${styles.td} tr'>${accounting.formatNumber(row.margin * 100, 1)}%</td>
+                  <td class='${styles.td} ${styles.metric}'>${row.Currency && accounting.formatNumber(row.amount, 4)}</td>
+                  <td class='${styles.td} ${styles.metric}'>${row.Currency && accounting.formatMoney(row.rate)}</td>
+                  <td class='${styles.td} ${styles.metric}'>${accounting.formatMoney(row.usd)}</td>
+                  <td class='${styles.td} ${styles.metric}'>${accounting.formatMoney(row.currentValue)}</td>
+                  <td class='${styles.td} ${styles.metric}'>${accounting.formatMoney(row.profit)}</td>
+                  <td class='${styles.td} ${styles.metric}'>${accounting.formatNumber(row.margin * 100, 1)}%</td>
                 </tr>
               `
             })}

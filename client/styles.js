@@ -14,5 +14,6 @@ module.exports = {
   table: 'f6 w-100 mw8 center',
   th: 'fw6 bb b--black-20 tl pb3 pr3 bg-white',
   tbody: 'lh-copy',
-  td: 'pv3 pr3 bb b--black-20'
+  td: 'pv3 pr3 bb b--black-20',
+  metric: 'tr code'
 }
