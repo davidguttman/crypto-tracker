@@ -30,6 +30,19 @@ function mainView (state, emit) {
 
   return html`
     <body class='${prefix} ${bodyStyle}'>
+      ${renderNewTransaction()}
+
+      ${renderTransactionList()}
+
+      <div>
+        <button class=${buttonStyle} onclick=${clickExport}>Export</button>
+      </div>
+
+    </body>
+  `
+
+  function renderNewTransaction () {
+    return html`
       <div>
         <form class="pa4 black-80">
           Purchased
@@ -42,7 +55,11 @@ function mainView (state, emit) {
           <button class=${buttonStyle} onclick=${clickAdd}>Add</button>
         </form>
       </div>
+    `
+  }
 
+  function renderTransactionList () {
+    return html`
       <div>
         ${state.transactions.map(function (tx) {
           return html`
@@ -52,17 +69,11 @@ function mainView (state, emit) {
           `
         })}
       </div>
-
-      <div>
-        <button class=${buttonStyle} onclick=${clickExport}>Export</button>
-      </div>
-
-    </body>
-  `
+    `
+  }
 
   function clickAdd (evt) {
     evt.preventDefault()
-
     emit('addTransaction')
   }
 
