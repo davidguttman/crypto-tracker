@@ -3,13 +3,17 @@ var cuid = require('cuid')
 var choo = require('choo')
 var html = require('choo/html')
 var fonts = require('google-fonts')
+var persist = require('choo-persist')
 var devtools = require('choo-devtools')
+
+var download = require('./download')
 
 fonts.add({'Open Sans': true})
 css('tachyons')
 
 var app = choo()
 app.use(devtools())
+app.use(persist())
 app.use(countStore)
 app.route('/', mainView)
 app.mount('body')
@@ -43,10 +47,14 @@ function mainView (state, emit) {
         ${state.transactions.map(function (tx) {
           return html`
             <div title=${tx.id}>
-              ${tx.amount} ${tx.currency} purchased for $${tx.usd}
+              ${tx.amount} ${tx.currency} purchased for $${tx.usd} on ${tx.date}
             </div>
           `
         })}
+      </div>
+
+      <div>
+        <button class=${buttonStyle} onclick=${clickExport}>Export</button>
       </div>
 
     </body>
@@ -58,6 +66,10 @@ function mainView (state, emit) {
     emit('addTransaction')
   }
 
+  function clickExport (evt) {
+    emit('exportTransactions')
+  }
+
   function onFieldChange (evt) {
     var key = evt.target.name
     var value = evt.target.value
@@ -66,8 +78,8 @@ function mainView (state, emit) {
 }
 
 function countStore (state, emitter) {
-  state.newTransaction = {}
-  state.transactions = []
+  state.newTransaction = state.newTransaction || {}
+  state.transactions = state.transactions || []
 
   emitter.on('addTransaction', function () {
     var tx = state.newTransaction
@@ -83,6 +95,11 @@ function countStore (state, emitter) {
   emitter.on('changeTransaction', function (change) {
     state.newTransaction[change.key] = change.value
     emitter.emit('render')
+  })
+
+  emitter.on('exportTransactions', function () {
+    var content = JSON.stringify(state.transactions)
+    download(content, 'transactions.json', 'application/json')
   })
 }
 
