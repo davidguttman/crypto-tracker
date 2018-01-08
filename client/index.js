@@ -1,4 +1,5 @@
 var css = require('sheetify')
+var cuid = require('cuid')
 var choo = require('choo')
 var html = require('choo/html')
 var fonts = require('google-fonts')
@@ -41,7 +42,7 @@ function mainView (state, emit) {
       <div>
         ${state.transactions.map(function (tx) {
           return html`
-            <div>
+            <div title=${tx.id}>
               ${tx.amount} ${tx.currency} purchased for $${tx.usd}
             </div>
           `
@@ -70,10 +71,10 @@ function countStore (state, emitter) {
 
   emitter.on('addTransaction', function () {
     var tx = state.newTransaction
-    console.log('tx', tx)
 
     if (!tx.amount || !tx.currency || !tx.usd) return
 
+    tx.id = cuid()
     state.transactions.push(tx)
     state.newTransaction = {}
     emitter.emit('render')
