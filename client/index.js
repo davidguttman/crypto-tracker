@@ -1,15 +1,11 @@
-var css = require('sheetify')
 var cuid = require('cuid')
 var choo = require('choo')
 var html = require('choo/html')
-var fonts = require('google-fonts')
 var persist = require('choo-persist')
 var devtools = require('choo-devtools')
 
+var styles = require('./styles')
 var download = require('./download')
-
-fonts.add({'Open Sans': true})
-css('tachyons')
 
 var app = choo()
 app.use(devtools())
@@ -18,26 +14,12 @@ app.use(countStore)
 app.route('/', mainView)
 app.mount('body')
 
-var prefix = css`
-  body {
-    font-family: "Open Sans";
-  }
-`
-
 function mainView (state, emit) {
-  var bodyStyle = 'cf pa3 mw9 center'
-  var buttonStyle = 'f5 no-underline black bg-animate hover-bg-black hover-white inline-flex items-center pa2 ba border-box mr4 pointer'
-
   return html`
-    <body class='${prefix} ${bodyStyle}'>
+    <body class=${styles.body}>
       ${renderNewTransaction()}
-
       ${renderTransactionList()}
-
-      <div>
-        <button class=${buttonStyle} onclick=${clickExport}>Export</button>
-      </div>
-
+      ${renderControls()}
     </body>
   `
 
@@ -46,13 +28,29 @@ function mainView (state, emit) {
       <div>
         <form class="pa4 black-80">
           Purchased
-          ${renderField({key: 'amount', value: state.newTransaction.amount, title: 'Amount'}, onFieldChange)}
-          ${renderField({key: 'currency', value: state.newTransaction.currency, title: 'Currency'}, onFieldChange)}
+          ${renderField({
+            key: 'amount',
+            value: state.newTransaction.amount,
+            title: 'Amount'
+          }, onFieldChange)}
+          ${renderField({
+            key: 'currency',
+            value: state.newTransaction.currency,
+            title: 'Currency'
+          }, onFieldChange)}
           for
-          ${renderField({key: 'usd', value: state.newTransaction.usd, title: 'USD'}, onFieldChange)}
+          ${renderField({
+            key: 'usd',
+            value: state.newTransaction.usd,
+            title: 'USD'
+          }, onFieldChange)}
           on
-          ${renderField({key: 'date', value: state.newTransaction.date, title: 'Date'}, onFieldChange)}
-          <button class=${buttonStyle} onclick=${clickAdd}>Add</button>
+          ${renderField({
+            key: 'date',
+            value: state.newTransaction.date,
+            title: 'Date'
+          }, onFieldChange)}
+          <button class=${styles.button} onclick=${clickAdd}>Add</button>
         </form>
       </div>
     `
@@ -68,6 +66,14 @@ function mainView (state, emit) {
             </div>
           `
         })}
+      </div>
+    `
+  }
+
+  function renderControls () {
+    return html`
+      <div>
+        <button class=${styles.button} onclick=${clickExport}>Export</button>
       </div>
     `
   }
@@ -119,7 +125,7 @@ function renderField ({key, value, title}, onChange) {
     <span>
       <input
         name=${key}
-        class='input-reset ba b--black-20 pa2 mb2 mw4 tc'
+        class=${styles.input}
         type='text'
         placeholder=${title || key}
         value=${value || ''}
