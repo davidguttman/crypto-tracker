@@ -1,0 +1,22 @@
+{
+  "name": "crypto-tracker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "budo client/index.js --live -- -t sheetify"
+  },
+  "keywords": [],
+  "author": "David Guttman <david@guttman.io> (http://davidguttman.com/)",
+  "license": "MIT",
+  "dependencies": {
+    "choo": "^6.6.1",
+    "choo-devtools": "^2.3.2",
+    "google-fonts": "^1.0.0",
+    "sheetify": "^6.2.0",
+    "tachyons": "^4.9.1"
+  },
+  "devDependencies": {
+    "budo": "^10.0.4"
+  }
+}
