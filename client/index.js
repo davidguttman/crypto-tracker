@@ -3,6 +3,7 @@ var choo = require('choo')
 var html = require('choo/html')
 var persist = require('choo-persist')
 var devtools = require('choo-devtools')
+var dataframe = require('dataframe')
 
 var styles = require('./styles')
 var download = require('./download')
@@ -57,15 +58,56 @@ function mainView (state, emit) {
   }
 
   function renderTransactionList () {
+    var dimensions = [
+      {value: 'currency', title: 'Currency'},
+      {value: 'date', title: 'Date'}
+    ]
+
+    var reduce = function (row, memo) {
+      memo.usd = (memo.usd || 0) + parseFloat(row.usd)
+      memo.amount = (memo.amount || 0) + parseFloat(row.amount)
+
+      memo.rate = memo.usd / memo.amount
+
+      return memo
+    }
+
+    var df = dataframe({
+      rows: state.transactions,
+      dimensions: dimensions,
+      reduce: reduce
+    })
+
+    var results = df.calculate({
+      dimensions: ['Currency']
+    })
+
     return html`
       <div>
-        ${state.transactions.map(function (tx) {
-          return html`
-            <div title=${tx.id}>
-              ${tx.amount} ${tx.currency} purchased for $${tx.usd} on ${tx.date}
-            </div>
-          `
-        })}
+        <table class=${styles.table} cellspacing=0>
+          <thead>
+            <tr>
+              <th class=${styles.th}>Currency</th>
+
+              <th class='${styles.th} tr'>Amount</th>
+              <th class='${styles.th} tr'>USD</th>
+              <th class='${styles.th} tr'>Rate</th>
+            </tr>
+          </thead>
+          <tbody class=${styles.tbody}>
+            ${results.map(function (row) {
+              return html`
+                <tr>
+                  <td class=${styles.td}>${row.Currency.toUpperCase()}</td>
+
+                  <td class='${styles.td} tr'>${row.amount.toFixed(2)}</td>
+                  <td class='${styles.td} tr'>${row.usd.toFixed(2)}</td>
+                  <td class='${styles.td} tr'>${row.rate.toFixed(2)}</td>
+                </tr>
+              `
+            })}
+          </tbody>
+        </table>
       </div>
     `
   }

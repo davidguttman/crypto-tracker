@@ -14,6 +14,7 @@
     "choo-devtools": "^2.3.2",
     "choo-persist": "^3.0.2",
     "cuid": "^2.0.2",
+    "dataframe": "^2.0.1",
     "google-fonts": "^1.0.0",
     "sheetify": "^6.2.0",
     "tachyons": "^4.9.1"
