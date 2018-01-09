@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "budo client/index.js --live -- -t sheetify"
+    "dev": "budo client/index.js -d public --live -- -t sheetify",
+    "build": "browserify -t sheetify client/index.js | uglifyjs -mc > public/index.js"
   },
   "keywords": [],
   "author": "David Guttman <david@guttman.io> (http://davidguttman.com/)",
@@ -22,6 +23,8 @@
     "tachyons": "^4.9.1"
   },
   "devDependencies": {
-    "budo": "^10.0.4"
+    "browserify": "^15.0.0",
+    "budo": "^10.0.4",
+    "uglify-es": "^3.3.5"
   }
 }
