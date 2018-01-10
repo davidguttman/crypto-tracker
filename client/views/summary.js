@@ -1,8 +1,8 @@
 var html = require('choo/html')
-var dataframe = require('dataframe')
 var accounting = require('accounting')
 
 var styles = require('../styles')
+var pivot = require('../components/pivot')
 var rates = require('../components/rates')
 var appBar = require('../components/appBar')
 
@@ -19,75 +19,57 @@ module.exports = function summary (state, emit) {
   `
 
   function renderSummary () {
-    var style = styles.summary
-
-    var dimensions = [
-      {value: row => 'Total', title: 'Total'},
-      {value: 'currency', title: 'Currency'},
-      {value: 'date', title: 'Date'}
-    ]
-
-    var reduce = function (row, memo) {
-      var rateNow = parseFloat(state.rates[row.currency] || 0)
-
-      var usd = parseFloat(row.usd)
-      var amount = parseFloat(row.amount)
-      var currentValue = rateNow * amount
-
-      memo.usd = (memo.usd || 0) + usd
-      memo.amount = (memo.amount || 0) + amount
-      memo.currentValue = (memo.currentValue || 0) + currentValue
-
-      memo.rate = memo.usd / memo.amount
-      memo.profit = memo.currentValue - memo.usd
-      memo.margin = memo.profit / memo.usd
-
-      return memo
-    }
-
-    var df = dataframe({
-      rows: state.transactions,
-      dimensions: dimensions,
-      reduce: reduce
+    var rows = state.transactions.map(function (tx) {
+      tx.currentRate = state.rates[tx.currency] || 0
+      return tx
     })
 
-    var results = df.calculate({
-      dimensions: ['Total', 'Currency']
+    return pivot({
+      data: rows,
+      groups: dimensions(),
+      reduce: reduce,
+      metrics: metrics()
     })
-
-    return html`
-      <div>
-        <table class=${style.table} cellspacing=0>
-          <thead>
-            <tr>
-              <th class=${style.th}>Currency</th>
-
-              <th class='${style.th} tr'>Amount</th>
-              <th class='${style.th} tr'>Rate</th>
-              <th class='${style.th} tr'>USD</th>
-              <th class='${style.th} tr'>Value</th>
-              <th class='${style.th} tr'>Profit</th>
-              <th class='${style.th} tr'>Margin</th>
-            </tr>
-          </thead>
-          <tbody class=${style.tbody}>
-            ${results.map(function (row) {
-              return html`
-                <tr>
-                  <td class=${style.td}>${(row.Currency || '').toUpperCase()}</td>
-
-                  <td class='${style.metric}'>${row.Currency && accounting.formatNumber(row.amount, 4)}</td>
-                  <td class='${style.metric}'>${row.Currency && accounting.formatMoney(row.rate)}</td>
-                  <td class='${style.metric}'>${accounting.formatMoney(row.usd)}</td>
-                  <td class='${style.metric}'>${accounting.formatMoney(row.currentValue)}</td>
-                  <td class='${style.metric}'>${accounting.formatMoney(row.profit)}</td>
-                  <td class='${style.metric}'>${accounting.formatNumber(row.margin * 100, 1)}%</td>
-                </tr>
-              `
-            })}
-          </tbody>
-        </table>
-      </div>
-    `
   }
 }
+
+function dimensions () {
+  return [
+    {value: row => 'Total', title: 'Total'},
+    {value: row => row.currency.toUpperCase(), title: 'Currency'}
+    // {value: row => row.date.slice(0, 7), title: 'Month'}
+    // {value: 'date', title: 'Date'}
+  ]
+}
+
+function reduce (row, memo) {
+  var usd = parseFloat(row.usd)
+  var amount = parseFloat(row.amount)
+  var currentRate = parseFloat(row.currentRate)
+  var currentValue = currentRate * amount
+
+  memo.usd = (memo.usd || 0) + usd
+  memo.amount = (memo.amount || 0) + amount
+  memo.currentValue = (memo.currentValue || 0) + currentValue
+
+  memo.rate = memo.usd / memo.amount
+  memo.profit = memo.currentValue - memo.usd
+  memo.margin = memo.profit / memo.usd
+
+  return memo
+}
+
+function metrics () {
+  return [
+    {value: 'amount', title: 'Amount', template: formatNumber},
+    {value: 'rate', title: 'Rate', template: formatMoney},
+    {value: 'usd', title: 'USD', template: formatMoney},
+    {value: 'currentValue', title: 'Value', template: formatMoney},
+    {value: 'profit', title: 'Profit', template: formatMoney},
+    {value: 'margin', title: 'Margin', template: formatPercent}
+  ]
+}
+
+function formatMoney (v) { return accounting.formatMoney(v) }
+function formatNumber (v) { return accounting.formatNumber(v, 2) }
+function formatPercent (v) { return accounting.formatNumber(v * 100, 1) + '%' }
