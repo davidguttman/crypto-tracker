@@ -1,9 +1,9 @@
 var html = require('choo/html')
-var jsonist = require('jsonist')
 var dataframe = require('dataframe')
 var accounting = require('accounting')
 
 var styles = require('../styles')
+var rates = require('../components/rates')
 var appBar = require('../components/appBar')
 
 module.exports = function summary (state, emit) {
@@ -12,51 +12,11 @@ module.exports = function summary (state, emit) {
       ${appBar()}
 
       <div class='ph4'>
-        ${renderRates()}
+        ${rates(state, emit)}
         ${renderSummary()}
       </div>
     </body>
   `
-
-  function renderRates () {
-    return html`
-      <div class='mb4'>
-        BTC:
-        ${renderField({
-          key: 'btc',
-          value: accounting.formatMoney(state.rates.btc),
-          title: 'BTC'
-        }, onRateChange)}
-
-        BCH:
-        ${renderField({
-          key: 'bch',
-          value: accounting.formatMoney(state.rates.bch),
-          title: 'BCH'
-        }, onRateChange)}
-
-        ETH:
-        ${renderField({
-          key: 'eth',
-          value: accounting.formatMoney(state.rates.eth),
-          title: 'ETH'
-        }, onRateChange)}
-
-        LTC:
-        ${renderField({
-          key: 'ltc',
-          value: accounting.formatMoney(state.rates.ltc),
-          title: 'LTC'
-        }, onRateChange)}
-
-        <button
-          class=${styles.button}
-          onclick=${clickUpdateRates}>
-          Update Rates
-        </button>
-      </div>
-    `
-  }
 
   function renderSummary () {
     var style = styles.summary
@@ -130,36 +90,4 @@ module.exports = function summary (state, emit) {
       </div>
     `
   }
-
-  function onRateChange (evt) {
-    var key = evt.target.name
-    var value = accounting.unformat(evt.target.value)
-    emit('changeRate', {key, value})
-  }
-
-  function clickUpdateRates () {
-    var url = 'https://api.coinbase.com/v2/prices/USD/spot?'
-    jsonist.get(url, {headers: {'cb-version': '2017-08-07'}}, function (err, res) {
-      if (err) return console.error(err)
-      res.data.forEach(function (rate) {
-        var key = rate.base.toLowerCase()
-        var value = rate.amount
-        emit('changeRate', {key, value})
-      })
-    })
-  }
-}
-
-function renderField ({key, value, title}, onChange) {
-  return html`
-    <span>
-      <input
-        name=${key}
-        class=${styles.input}
-        type='text'
-        placeholder=${title || key}
-        value=${value || ''}
-        onchange=${onChange}/>
-    </span>
-  `
 }
